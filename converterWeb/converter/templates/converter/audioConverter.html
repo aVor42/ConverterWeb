@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>converter web</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <style>
+
+* {
+  margin:0;
+  padding:0;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+header, footer, section{
+    position: absolute;
+    width: 100%;
+    height: calc(100% - 5vh);
+}
+
+header, footer{
+    background-color: #000;
+    color: white;
+}
+
+header{
+    height: 5vh;
+}
+
+footer{
+    height: 5vh;
+    bottom: 0;
+}
+
+section{
+    top: 5vh;
+}
+
+.nav{
+    position: absolute;
+    width: 100%;
+}
+
+.nav a{
+    position: relative;
+    top: 20px;
+    color: white;
+    text-decoration: none;
+    left: 45%;
+    margin-right: 20px;
+}
+
+        .main-hello{
+            margin-top: 1%;
+            margin-left: auto;
+            margin-right: auto;
+            width: fit-content;
+        }
+
+section {
+    background: #dbdbdb;
+}
+
+.panels{
+    margin-left: auto;
+    margin-right: auto;
+    /*width: max-content;*/
+}
+
+.panel{
+    width: 250px;
+    height: 400px;
+    border-radius: 15%;
+    border: 3px solid #4d4d4d;
+    background-color: #afafaf;
+}
+
+.panel:hover {
+    background-color: #cecece;
+}
+
+.custom-file{
+    margin-top: 20px;
+    width: 450px;
+}
+
+#file-send-container{
+    margin-left: auto;
+    margin-top: 5%;
+    margin-right: 3%;
+    width: fit-content;
+}
+
+.format-list{
+    margin-top: 30px;
+    font-size: 24px;
+}
+
+</style>
+
+</head>
+<body>
+
+<header>
+
+    <span style="vertical-align: middle" onclick="goToHome()">
+        <span class="logo-text"> {% load static %} <img src="{% static 'img/logo.png' %}" height="50"></span>
+    </span>
+
+    <div class="nav">
+        <a href="">Label 1</a>
+        <a href="">Label 2</a>
+        <a href="">Label 3</a>
+    </div>
+
+
+  </header>
+
+  <section>
+
+        <div class="main-hello">
+            <h1>Конвертация аудиофайлов</h1>
+        </div>
+        <hr/>
+
+
+        <div class="row">
+
+            <div class="col-md-2"></div>
+
+            <div class="col-md-2">
+                <div class="files-list-container">
+                    <ul class="list-group files-list"></ul>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div id="file-send-container">
+                    <div id="dropContainer" draggable="true" >
+                        {% load static %} <img src="{% static 'img/drag-n-drop.png' %}" id="img-artist-photo" height="450" width="450" class="leftimg"  style="border-radius: 30%;border:2px solid black;"/>
+                        </div>
+                
+                        <div class="custom-file"> 
+                            <input type="file" class="custom-file-input" id="fileInput" hidden>
+                        </div>
+
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="format-list">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="flexRadioDefault" onclick="setCurrentFormat('wav')" title="Hello"  style="height:20px; width:20px; vertical-align: middle;" checked>
+                        <label class="form-check-label" for="flexRadioDefault1">
+                            WAV
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="flexRadioDefault" onclick="setCurrentFormat('mp3')"  style="height:20px; width:20px; vertical-align: middle;">
+                        <label class="form-check-label" for="flexRadioDefault2">
+                            MP3
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="flexRadioDefault" onclick="setCurrentFormat('ogg')" style="height:20px; width:20px; vertical-align: middle;">
+                        <label class="form-check-label" for="flexRadioDefault2">
+                            OGG
+                        </label>
+                    </div>
+                </div>
+
+
+                <button type="button" class="btn btn-secondary" id="convert-button" onclick="convertFiles()" style="visibility: hidden;">Конвертировать</button>
+            </div>
+
+        </div>
+
+
+
+
+
+
+  </section>
+
+  <footer>
+    <p>Footer</p>
+  </footer>
+
+
+<script type = "text/javascript">
+
+let currentFormat = "wav";
+
+function setCurrentFormat(format){
+    currentFormat = format;
+}
+
+function convertFiles(){
+
+    var formData = new FormData();
+
+    formData.append('format', currentFormat);
+
+    for(let i = 0; i < fileInput.files.length; i++)
+        formData.append('file ' + i, fileInput.files[i]);
+
+    let filename = "";
+
+    fetch("/audioConverter/convert", {
+        method: 'POST', // *GET, POST, PUT, DELETE, etc.
+        body: formData // body data type must match "Content-Type" header
+    }).then(response => {
+        const disposition  = response.headers.get('Content-Disposition');
+        filename = disposition.split(/;(.+)/)[1].split(/=(.+)/)[1]
+        if (filename.startsWith("UTF-8''"))
+            filename = decodeURIComponent(filename.replace("UTF-8''", '').replace(/['"]/g, ''))
+        else
+            filename = filename.replace(/['"]/g, '')
+        return response.blob();
+    }).then(blob => {
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a); // we need to append the element to the dom -> otherwise it will not work in firefox
+            a.click();    
+            a.remove();  //afterwards we remove the element again         
+        });
+}
+         
+dropContainer.ondragenter =  dropContainer.ondragover = function(evt) {
+  evt.preventDefault();
+};
+
+dropContainer.ondrop = function(evt) {
+
+    const dataTransfer = new DataTransfer();
+
+    for(let i = 0; i < evt.dataTransfer.files.length; i++)
+        dataTransfer.items.add(evt.dataTransfer.files[i]);
+
+    for(let i = 0; i < fileInput.files.length; i++)
+        dataTransfer.items.add(fileInput.files[i]);
+
+    $(".files-list").html("");
+    for(let i = 0; i < dataTransfer.files.length; i++)
+        $(".files-list").append($("<li>").addClass("list-group-item").text(dataTransfer.files[i].name));
+
+    $("#convert-button").css('visibility', 'visible');
+    
+    fileInput.files = dataTransfer.files;
+
+  evt.preventDefault();
+};
+
+
+function goToHome(){
+    window.location.href = '/';
+}
+ </script>
+
+</body>
+</html>
